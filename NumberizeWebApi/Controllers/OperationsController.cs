@@ -15,8 +15,17 @@ namespace Numberize
             this.calculatorService = calculatorService;
         }
 
+        [Route("")]
+        [Route("Operations")]
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return new OkObjectResult("Ok");
+        }
+
+        [Route("Operations/Calculate")]
         [HttpPost]
-        public IActionResult Post(RequestDto request)
+        public IActionResult Post([FromBody]RequestDto request)
         {
             return new OkObjectResult(calculatorService.Calculate(request));
         }
