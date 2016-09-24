@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Numberize.Model;
 using Numberize.Services;

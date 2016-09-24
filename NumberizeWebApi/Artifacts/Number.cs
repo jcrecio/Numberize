@@ -8,10 +8,16 @@ namespace Numberize.Artifacts
     public class Number
     {
         public string Content { get; set; }
+        public bool IsNegative { get; private set; }
 
         public Number(string content)
         {
             this.Content = content;
+        }
+
+        public Number(string content, bool isNegative)
+        {
+            this.IsNegative = isNegative;
         }
 
         public override string ToString()
@@ -21,36 +27,20 @@ namespace Numberize.Artifacts
 
         public static Number operator +(Number operand1, Number operand2)
         {
-            var numbers = GetOrderedNumbers(operand1, operand2);
-
-            var shortestNumber = numbers.ElementAt(0);
-            var longestNumber = numbers.ElementAt(1);
-
-            AdjustLengthForNumber(ref shortestNumber, longestNumber.Content.Length);
-
-            return shortestNumber.Add(longestNumber);
+            var operationMembers = GetOperationMembers(operand1, operand2);
+            return operationMembers.ShortestNumber.Add(operationMembers.LongestNumber);
         }
 
-        private static IEnumerable<Number> GetOrderedNumbers(params Number[] operands)
-        {
-            return operands.OrderBy(n => n.Content.Length);
-        }
-
-        private static void AdjustLengthForNumber(ref Number number, int maxLength)
-        {
-            number.Content = number.Content.PadLeft(maxLength, '0');
-        }
-
-        private Number Add(Number longestNumber)
+        private Number Add(Number number)
         {
             var overflow = 0;
             var result = new StringBuilder();
-            
-            for(int index = longestNumber.Content.Length - 1; index >= 0; index--)
+
+            for (int index = number.Content.Length - 1; index >= 0; index--)
             {
-                var sumDigits = overflow
-                   + GetCharDigitAsInt(this.Content[index])
-                   + GetCharDigitAsInt(longestNumber.Content[index]);
+                var sumDigits = overflow 
+                    + GetCharDigitAsInt(this.Content[index]) 
+                    + GetCharDigitAsInt(number.Content[index]);
 
                 InsertDigitsSum(result, sumDigits);
                 overflow = GetOverflowFromSum(sumDigits);
@@ -65,25 +55,117 @@ namespace Numberize.Artifacts
             return Convert.ToInt32(content.ToString());
         }
 
+        private int GetCharDigitAsInt(int index)
+        {
+            var digit = this.Content[index];
+            var absoluteValue = Convert.ToInt32(digit.ToString());
+
+            if (IsNegative)
+            {
+                absoluteValue = -absoluteValue;
+            }
+
+            return absoluteValue;
+        }
+
+        private void InsertDigitsSum(StringBuilder result, int amount)
+        {
+            var onesOfPartialSum = GetOnes(amount);
+            result.Insert(0, onesOfPartialSum);
+        }
+
         private string GetOnes(int sumDigits)
         {
             return (sumDigits % 10).ToString();
         }
 
-        private void AddOverflow(StringBuilder result, int overflow)
-        {
-            if(overflow != 0) result.Insert(0, "1");
-        }
-
-        private void InsertDigitsSum(StringBuilder result, int sumDigits)
-        {
-            var onesOfPartialSum = GetOnes(sumDigits);
-            result.Insert(0, onesOfPartialSum);
-        }
-
         private int GetOverflowFromSum(int sum)
         {
             return sum >= 10 ? 1 : 0;
+        }
+
+        private void AddOverflow(StringBuilder result, int overflow)
+        {
+            if (overflow != 0)
+            {
+                result.Insert(0, "1");
+            }
+        }
+
+        public static Number operator -(Number operand1)
+        {
+            return new Number(operand1.Content, !operand1.IsNegative);
+        }
+
+        public static Number operator -(Number operand1, Number operand2)
+        {
+            var operationMembers = GetOperationMembers(operand1, operand2);
+
+            return operationMembers.ShortestNumber.Substract(operationMembers.LongestNumber);
+        }
+
+        private static OperationMembers GetOperationMembers(Number operand1, Number operand2)
+        {
+            var numbersOrderedByLength = GetNumbersOrderedByLength(operand1, operand2);
+
+            var shortestNumber = numbersOrderedByLength.ElementAt(1);
+            var longestNumber = numbersOrderedByLength.ElementAt(0);
+
+            AdjustLengthForNumber(ref shortestNumber, longestNumber.Content.Length);
+
+            return new OperationMembers
+            {
+                ShortestNumber = shortestNumber,
+                LongestNumber = longestNumber
+            };
+        }
+        private static IEnumerable<Number> GetNumbersOrderedByLength(params Number[] operands)
+        {
+            return operands.OrderByDescending(n => n.Content.Length);
+        }
+
+        private static void AdjustLengthForNumber(ref Number number, int maxLength)
+        {
+            number.Content = number.Content.PadLeft(maxLength, '0');
+        }
+
+        private Number Substract(Number longestNumber)
+        {
+            var overflow = 0;
+            var result = new StringBuilder();
+
+            for (int index = longestNumber.Content.Length - 1; index >= 0; index--)
+            {
+                var partialOperandOne = overflow + longestNumber.GetCharDigitAsInt(index);
+                var partialOperandTwo = this.GetCharDigitAsInt(index);
+
+                overflow = GetOverflowForSubstraction(partialOperandOne, partialOperandTwo);
+                var substraction = GetSubstraction(partialOperandOne, partialOperandTwo, overflow);
+
+                result.Insert(0, substraction);
+            };
+
+            return new Number(result.ToString());
+        }
+
+        private int GetOverflowForSubstraction(int partialOperandOne, int partialOperandTwo){
+            return partialOperandOne < partialOperandTwo ? 1 : 0;
+        } 
+
+        private int GetSubstraction(int operand1, int operand2, int overflow)
+        {
+            if (overflow == 1)
+            {
+                operand1 += 10;
+            }
+
+            return operand1 - operand2;
+        }
+
+        private class OperationMembers
+        {
+            public Number ShortestNumber { get; set; }
+            public Number LongestNumber { get; set; }
         }
     }
 }

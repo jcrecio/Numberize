@@ -3,6 +3,6 @@
         public class RequestDto
         {
             public string[] Values {get; set;}
-            public object Operation;
+            public string Operation;
         }
      }
