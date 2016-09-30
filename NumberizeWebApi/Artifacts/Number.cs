@@ -38,9 +38,7 @@ namespace Numberize.Artifacts
 
             for (int index = number.Content.Length - 1; index >= 0; index--)
             {
-                var sumDigits = overflow 
-                    + GetCharDigitAsInt(this.Content[index]) 
-                    + GetCharDigitAsInt(number.Content[index]);
+                var sumDigits = GetSumDigits(number.Content[index], Content[index], overflow);
 
                 InsertDigitsSum(result, sumDigits);
                 overflow = GetOverflowFromSum(sumDigits);
@@ -48,6 +46,11 @@ namespace Numberize.Artifacts
 
             AddOverflow(result, overflow);
             return new Number(result.ToString());
+        }
+
+        private int GetSumDigits(char digit1, char digit2, int overflow)
+        {
+            return overflow + GetCharDigitAsInt(digit1) + GetCharDigitAsInt(digit2);
         }
 
         private int GetCharDigitAsInt(char content)
@@ -101,7 +104,10 @@ namespace Numberize.Artifacts
         {
             var operationMembers = GetOperationMembers(operand1, operand2);
 
-            return operationMembers.ShortestNumber.Substract(operationMembers.LongestNumber);
+            var substraction = operationMembers.LongestNumber.Substract(operationMembers.ShortestNumber);
+            var result = AdjustOutput(substraction);
+
+            return result;
         }
 
         private static OperationMembers GetOperationMembers(Number operand1, Number operand2)
@@ -129,28 +135,28 @@ namespace Numberize.Artifacts
             number.Content = number.Content.PadLeft(maxLength, '0');
         }
 
-        private Number Substract(Number longestNumber)
+        private Number Substract(Number shortestNumber)
         {
             var overflow = 0;
             var result = new StringBuilder();
 
-            for (int index = longestNumber.Content.Length - 1; index >= 0; index--)
+            for (int index = Content.Length - 1; index >= 0; index--)
             {
-                var partialOperandOne = overflow + longestNumber.GetCharDigitAsInt(index);
-                var partialOperandTwo = this.GetCharDigitAsInt(index);
+                var partialOperandOne = GetCharDigitAsInt(index);
+                var partialOperandTwo = overflow + shortestNumber.GetCharDigitAsInt(index);
 
                 overflow = GetOverflowForSubstraction(partialOperandOne, partialOperandTwo);
-                var substraction = GetSubstraction(partialOperandOne, partialOperandTwo, overflow);
 
-                result.Insert(0, substraction);
+                result.Insert(0, GetSubstraction(partialOperandOne, partialOperandTwo, overflow));
             };
 
             return new Number(result.ToString());
         }
 
-        private int GetOverflowForSubstraction(int partialOperandOne, int partialOperandTwo){
+        private int GetOverflowForSubstraction(int partialOperandOne, int partialOperandTwo)
+        {
             return partialOperandOne < partialOperandTwo ? 1 : 0;
-        } 
+        }
 
         private int GetSubstraction(int operand1, int operand2, int overflow)
         {
@@ -160,6 +166,16 @@ namespace Numberize.Artifacts
             }
 
             return operand1 - operand2;
+        }
+
+        private static Number AdjustOutput(Number number)
+        {
+            if (number.Content.Length == 1)
+            {
+                return new Number(number.Content);
+            }
+
+            return new Number(number.Content.TrimStart('0'));
         }
 
         private class OperationMembers

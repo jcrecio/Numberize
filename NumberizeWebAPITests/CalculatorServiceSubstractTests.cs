@@ -135,5 +135,41 @@ namespace NumberizeTests
             var result = Target.Calculate(request);
             result.ShouldBeEquivalentTo(expectedResponse);
         }
+        
+        [Fact]
+        public void ShouldGet_9_From_15_6()
+        {
+            var expectedResponse = new ResponseDto()
+            {
+                Result = "9"
+            };
+
+            var request = new RequestDto()
+            {
+                Values = new[]{"15", "6"},
+                Operation = "substract"
+            };
+
+            var result = Target.Calculate(request);
+            result.ShouldBeEquivalentTo(expectedResponse);
+        }
+
+        [Fact]
+        public void ShouldGet_9999_From_11000_1_1000()
+        {
+            var expectedResponse = new ResponseDto()
+            {
+                Result = "9999"
+            };
+
+            var request = new RequestDto()
+            {
+                Values = new[]{"11000", "1", "1000"},
+                Operation = "substract"
+            };
+
+            var result = Target.Calculate(request);
+            result.ShouldBeEquivalentTo(expectedResponse);
+        }
     }
 }
